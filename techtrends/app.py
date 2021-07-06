@@ -3,6 +3,18 @@ import sqlite3
 
 from flask import Flask, jsonify, json, render_template, request, url_for, redirect, flash
 from werkzeug.exceptions import abort
+import sys
+
+stdout_fileno = sys.stdout
+stderr_fileno = sys.stderr
+
+def logDebug(msg):
+    stdout_fileno.write(msg)
+    logging.debug(msg)
+
+def logError(msg):
+    stderr_fileno.write(msg)
+    logging.error(msg)
 
 # Function to get a database connection.
 # This function connects to database with the name `database.db`
@@ -56,16 +68,16 @@ def get_metric():
 def post(post_id):
     post = get_post(post_id)
     if post is None:
-      logging.error('Article with id {} does not exists'.format(post_id))
+      logError('Article with id {} does not exists'.format(post_id))
       return render_template('404.html'), 404
     else:
-      logging.info('Article "{}" retrieved!'.format(post['title']))
+      logDebug('Article "{}" retrieved!'.format(post['title']))
       return render_template('post.html', post=post)
 
 # Define the About Us page
 @app.route('/about')
 def about():
-    logging.info('"About Us" Page Retrieved')
+    logDebug('"About Us" Page Retrieved')
     return render_template('about.html')
 
 # Define the post creation functionality
@@ -83,7 +95,7 @@ def create():
                          (title, content))
             connection.commit()
             connection.close()
-            logging.info('Article "{}" has been created'.format(title))
+            logDebug('Article "{}" has been created'.format(title))
 
             return redirect(url_for('index'))
 
@@ -91,5 +103,8 @@ def create():
 
 # start the application on port 3111
 if __name__ == "__main__":
-   logging.basicConfig(level=logging.DEBUG)
+   logging.basicConfig(
+       format='%(asctime)s %(levelname)-8s %(message)s',
+       datefmt='%Y-%m-%d %H:%M:%S',
+       level=logging.DEBUG)
    app.run(host='0.0.0.0', port='3111')
